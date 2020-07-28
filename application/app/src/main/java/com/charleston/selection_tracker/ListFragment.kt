@@ -47,7 +47,9 @@ class ListFragment : Fragment(R.layout.fragment_list) {
             addItems()
         }
 
-        listAdapter.select(listScreen.last().document)
+        if(listScreen.isNotEmpty()){
+            listAdapter.select(listScreen.last().document)
+        }
     }
 
     private fun setupList() {
