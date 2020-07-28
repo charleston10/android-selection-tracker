@@ -1,19 +1,23 @@
 package com.charleston.selection_tracker
 
 import android.os.Bundle
-import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.selection.*
+import androidx.recyclerview.selection.SelectionPredicates
+import androidx.recyclerview.selection.SelectionTracker
+import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.charleston.selection_tracker.adapter.tracker.DetailsLookup
+import com.charleston.selection_tracker.adapter.tracker.KeyProvider
+import com.charleston.selection_tracker.adapter.ListAdapter
 import kotlinx.android.synthetic.main.fragment_list.*
 
 class ListFragment : Fragment(R.layout.fragment_list) {
 
     private val listAdapter by lazy { ListAdapter() }
+    private lateinit var selectionTracker: SelectionTracker<String>
 
     private val listScreen =
         arrayListOf(
@@ -28,17 +32,22 @@ class ListFragment : Fragment(R.layout.fragment_list) {
         super.onViewCreated(view, savedInstanceState)
 
         setupList()
-        bindList()
+        setupSelectionTracker()
         bindButton()
+        addItems()
+        initialize()
     }
 
+    @ExperimentalStdlibApi
     override fun onResume() {
         super.onResume()
 
         getNavigationResult()?.value?.let {
-            listScreen.removeAt(it.toInt())
-            bindList()
+            listScreen.removeLastOrNull()
+            addItems()
         }
+
+        listAdapter.select(listScreen.last().document)
     }
 
     private fun setupList() {
@@ -46,11 +55,15 @@ class ListFragment : Fragment(R.layout.fragment_list) {
             adapter = listAdapter
             layoutManager = LinearLayoutManager(context)
         }
+    }
 
-        val tracker = SelectionTracker.Builder(
+    private fun setupSelectionTracker(){
+        selectionTracker = SelectionTracker.Builder(
             "id_selection_tracker",
             list,
-            KeyProvider(listScreen),
+            KeyProvider(
+                listScreen
+            ),
             DetailsLookup(list),
             StorageStrategy.createStringStorage()
         ).withSelectionPredicate(
@@ -58,7 +71,8 @@ class ListFragment : Fragment(R.layout.fragment_list) {
         ).build()
     }
 
-    private fun bindList() {
+
+    private fun addItems() {
         listAdapter.addList(listScreen)
         Toast.makeText(context, "Total ${listScreen.size}", Toast.LENGTH_LONG).show()
     }
@@ -69,44 +83,7 @@ class ListFragment : Fragment(R.layout.fragment_list) {
         }
     }
 
-    class KeyProvider(private val list: List<ItemModel>) : ItemKeyProvider<String>(SCOPE_MAPPED) {
-
-        override fun getKey(position: Int) = list[position].document
-
-        override fun getPosition(key: String): Int {
-            return try {
-                list.indexOf(
-                    list.single { item ->
-                        item.document == key
-                    }
-                )
-            } catch (e: Exception) {
-                RecyclerView.NO_POSITION
-            }
-        }
-    }
-
-    class DetailsLookup(private val recyclerView: RecyclerView) :
-        ItemDetailsLookup<String>() {
-        override fun getItemDetails(event: MotionEvent): ItemDetails<String>? {
-            val view = recyclerView.findChildViewUnder(event.x, event.y)
-
-            if (view != null) {
-                val holder = recyclerView.getChildViewHolder(view)
-                if (holder is ListAdapter.ListViewHolder) {
-                    //return holder.itemDetails
-                }
-            }
-            return null
-        }
-    }
-
-    class ItemModelLookup(
-        private val itemModel: ItemModel,
-        private val adapterPosition: Int = 0
-    ) : ItemDetailsLookup.ItemDetails<String>() {
-        override fun getPosition() = adapterPosition
-        override fun getSelectionKey() = itemModel.document
-        override fun inSelectionHotspot(e: MotionEvent) = true
+    private fun initialize(){
+        listAdapter.setSelectionTracker(selectionTracker)
     }
 }

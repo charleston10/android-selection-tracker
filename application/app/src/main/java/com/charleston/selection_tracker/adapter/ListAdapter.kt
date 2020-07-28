@@ -1,27 +1,23 @@
-package com.charleston.selection_tracker
+package com.charleston.selection_tracker.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.widget.RecyclerView
+import com.charleston.selection_tracker.ItemModel
+import com.charleston.selection_tracker.R
 
 class ListAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var list: ArrayList<ItemModel> = arrayListOf()
-
-    inner class ListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        fun bind(item: ItemModel) {
-            itemView.findViewById<TextView>(R.id.txt_document).text = item.document
-        }
-    }
+    private var selectionTracker: SelectionTracker<String>? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return ListViewHolder(
             LayoutInflater
                 .from(parent.context)
-                .inflate(R.layout.item_list, parent, false)
+                .inflate(R.layout.item_list, parent, false),
+            selectionTracker
         )
     }
 
@@ -39,5 +35,17 @@ class ListAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         this.list.clear()
         this.list.addAll(list)
         notifyDataSetChanged()
+    }
+
+    fun setSelectionTracker(selectionTracker: SelectionTracker<String>) {
+        this.selectionTracker = selectionTracker;
+    }
+
+    fun getSelectionTracker(): SelectionTracker<String>? {
+        return this.selectionTracker
+    }
+
+    fun select(document: String) {
+        selectionTracker?.select(document)
     }
 }
