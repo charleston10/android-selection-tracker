@@ -41,10 +41,6 @@ class ListAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         this.selectionTracker = selectionTracker;
     }
 
-    fun getSelectionTracker(): SelectionTracker<String>? {
-        return this.selectionTracker
-    }
-
     fun select(document: String) {
         selectionTracker?.select(document)
     }
